@@ -1,8 +1,4 @@
-FROM ubuntu
-
-RUN apt-get update && \
-    apt-get install -y python3 && \
-    apt-get install -y python3-pip
+FROM python:3.9-alpine
 
 WORKDIR /app
 
@@ -13,7 +9,3 @@ RUN pip3 install -r ./requirements.txt
 EXPOSE 5001
 
 COPY . . 
-
-ENTRYPOINT [ "python3" ]
-
-CMD [ "app.py" ]
