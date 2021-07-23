@@ -1,0 +1,65 @@
+version: "3"
+services:
+  ocr-service:
+    build:
+      context: ./ocr_service
+      dockerfile: Dockerfile
+    ports: 
+      - "5000:5000"
+    networks: 
+      - default_network
+    volumes:
+      - "./preprocess_service/images:/app/images"
+    depends_on: 
+      - db-service
+  preprocess-service:
+    build:
+      context: ./preprocess_service
+      dockerfile: Dockerfile
+    ports: 
+      - "5001:5001"
+    networks: 
+      - default_network
+    volumes: 
+      - "./preprocess_service/images:/app/images"
+    depends_on: 
+      - db-service
+  db-service:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 'deeplom'
+    volumes:
+      - db-volume:/var/lib/mysql
+      - "./migrations/migrations.sql:/docker-entrypoint-initdb.d/1.sql"
+    ports:
+      - "3306:3306"
+    networks: 
+      - default_network
+  data-access-service:
+    build:
+      context: ./data_access_service
+      dockerfile: Dockerfile
+    ports: 
+      - "5002:5002"
+    networks: 
+      - default_network
+    depends_on: 
+      - db-service
+  master-service:
+    image: nginx
+    volumes: 
+      - ./master_service/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./master_service/temp:/var/cache/nginx/client_temp
+    ports: 
+      - "8080:8080"
+    networks: 
+      - default_network
+    depends_on: 
+      - ocr-service
+      - preprocess-service
+      - data-access-service
+volumes:
+  db-volume:
+networks:
+  default_network:
